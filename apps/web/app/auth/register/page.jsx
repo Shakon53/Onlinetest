@@ -21,7 +21,10 @@ export default function RegisterPage() {
     try {
       const data = await apiRequest('/auth/register', { method: 'POST', body: JSON.stringify(form) });
       saveSession(data);
-      router.push('/dashboard');
+      const role = data.user?.role;
+      if (role === 'admin') router.push('/admin');
+      else if (role === 'teacher') router.push('/teacher');
+      else router.push('/dashboard');
     } catch (error) {
       setStatus(error.message);
     } finally {
