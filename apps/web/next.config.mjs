@@ -1,0 +1,7 @@
+const nextConfig = {
+  reactStrictMode: true,
+  typedRoutes: false,
+  outputFileTracingRoot: process.cwd()
+};
+
+export default nextConfig;

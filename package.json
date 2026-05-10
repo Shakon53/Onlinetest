@@ -1,0 +1,1 @@
+{"scripts":{"dev":"concurrently \"npm run dev --workspace apps/api\" \"npm run dev --workspace apps/web\"","install:all":"npm install --workspaces","build":"npm run build --workspace apps/web","start":"npm run start --workspace apps/api"},"workspaces":["apps/*"],"devDependencies":{"concurrently":"^9.1.2"}}
