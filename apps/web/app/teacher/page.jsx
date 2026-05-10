@@ -1,11 +1,26 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { BarChart3, GripVertical, Plus, Upload } from 'lucide-react';
 import { Shell } from '../../components/Shell';
 import { useI18n } from '../../components/I18nProvider';
+import { getSession } from '../../lib/api';
 
 export default function TeacherPage() {
   const { t } = useI18n();
+  const router = useRouter();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const user = getSession();
+    if (!user) { router.replace('/auth/login'); return; }
+    if (user.role !== 'teacher' && user.role !== 'admin') { router.replace('/dashboard'); return; }
+    setReady(true);
+  }, [router]);
+
+  if (!ready) return null;
+
   return (
     <Shell>
       <section className="mx-auto max-w-7xl px-4 py-10">

@@ -1,11 +1,26 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { Ban, Languages, LineChart, ShieldCheck, Users } from 'lucide-react';
 import { Shell } from '../../components/Shell';
 import { useI18n } from '../../components/I18nProvider';
+import { getSession } from '../../lib/api';
 
 export default function AdminPage() {
   const { t } = useI18n();
+  const router = useRouter();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const user = getSession();
+    if (!user) { router.replace('/auth/login'); return; }
+    if (user.role !== 'admin') { router.replace('/dashboard'); return; }
+    setReady(true);
+  }, [router]);
+
+  if (!ready) return null;
+
   const items = [
     { label: t.adminUsers, icon: Users },
     { label: t.navCourses, icon: ShieldCheck },

@@ -19,3 +19,14 @@ export function saveSession({ token, user }) {
   localStorage.setItem('lms_token', token);
   localStorage.setItem('lms_user', JSON.stringify(user));
 }
+
+export function getSession() {
+  if (typeof window === 'undefined') return null;
+  const stored = localStorage.getItem('lms_user');
+  return stored ? JSON.parse(stored) : null;
+}
+
+export function logout() {
+  localStorage.removeItem('lms_token');
+  localStorage.removeItem('lms_user');
+}
