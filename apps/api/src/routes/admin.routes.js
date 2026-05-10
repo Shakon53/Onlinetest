@@ -8,7 +8,7 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = Router();
 
-router.use(requireAuth, requireRole('Admin'));
+router.use(requireAuth, requireRole('admin'));
 
 router.get('/analytics', asyncHandler(async (req, res) => {
   const [users, courses, certificates, progress] = await Promise.all([User.countDocuments(), Course.countDocuments(), Certificate.countDocuments(), Progress.countDocuments()]);

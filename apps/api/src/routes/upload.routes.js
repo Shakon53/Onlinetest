@@ -14,7 +14,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage, limits: { fileSize: 1024 * 1024 * 500 } });
 
-router.post('/materials', requireAuth, requireRole('Teacher', 'Admin'), upload.single('file'), (req, res) => {
+router.post('/materials', requireAuth, requireRole('teacher', 'admin'), upload.single('file'), (req, res) => {
   res.status(201).json({ file: req.file, url: `/uploads/${req.file.filename}` });
 });
 

@@ -21,15 +21,18 @@ export function createApp() {
     .map((origin) => origin.trim())
     .filter(Boolean);
 
-  app.set('trust proxy', 1);
-  app.use(helmet());
-  app.use(cors({
+  const corsOptions = {
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      if (!origin || allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin)) return callback(null, true);
       return callback(new Error('Not allowed by CORS'));
     },
     credentials: true
-  }));
+  };
+
+  app.set('trust proxy', 1);
+  app.use(helmet({ crossOriginResourcePolicy: false }));
+  app.options('*', cors(corsOptions));
+  app.use(cors(corsOptions));
   app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 300 }));
   app.use(express.json({ limit: '10mb' }));
   app.use('/uploads', express.static(process.env.UPLOAD_DIR || 'uploads'));

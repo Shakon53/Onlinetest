@@ -13,7 +13,7 @@ router.get('/recommendations', requireAuth, asyncHandler(async (req, res) => {
   res.json({ recommendations });
 }));
 
-router.post('/generate-test', requireAuth, requireRole('Teacher', 'Admin'), asyncHandler(async (req, res) => {
+router.post('/generate-test', requireAuth, requireRole('teacher', 'admin'), asyncHandler(async (req, res) => {
   const { topic, count } = z.object({ topic: z.string().min(2), count: z.number().min(1).max(50).default(5) }).parse(req.body);
   const questions = await generateTestQuestions({ topic, count });
   res.json({ questions });

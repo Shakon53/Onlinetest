@@ -12,7 +12,7 @@ router.get('/', asyncHandler(async (req, res) => {
   res.json({ courses });
 }));
 
-router.post('/', requireAuth, requireRole('Teacher', 'Admin'), asyncHandler(async (req, res) => {
+router.post('/', requireAuth, requireRole('teacher', 'admin'), asyncHandler(async (req, res) => {
   const course = await Course.create({ ...req.body, teacher: req.user._id });
   res.status(201).json({ course });
 }));
@@ -23,7 +23,7 @@ router.get('/:id', asyncHandler(async (req, res) => {
   res.json({ course, lessons });
 }));
 
-router.post('/:id/lessons', requireAuth, requireRole('Teacher', 'Admin'), asyncHandler(async (req, res) => {
+router.post('/:id/lessons', requireAuth, requireRole('teacher', 'admin'), asyncHandler(async (req, res) => {
   const lesson = await Lesson.create({ ...req.body, course: req.params.id });
   res.status(201).json({ lesson });
 }));

@@ -7,12 +7,12 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = Router();
 
-router.post('/', requireAuth, requireRole('Teacher', 'Admin'), asyncHandler(async (req, res) => {
+router.post('/', requireAuth, requireRole('teacher', 'admin'), asyncHandler(async (req, res) => {
   const test = await Test.create(req.body);
   res.status(201).json({ test });
 }));
 
-router.post('/:testId/questions', requireAuth, requireRole('Teacher', 'Admin'), asyncHandler(async (req, res) => {
+router.post('/:testId/questions', requireAuth, requireRole('teacher', 'admin'), asyncHandler(async (req, res) => {
   const question = await Question.create({ ...req.body, test: req.params.testId });
   res.status(201).json({ question });
 }));

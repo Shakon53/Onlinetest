@@ -12,7 +12,7 @@ const registerSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(6),
-  role: z.enum(['Student', 'Teacher']).default('Student'),
+  role: z.enum(['student', 'teacher']).default('student'),
   preferredLanguage: z.enum(['ru', 'en', 'kk']).default('ru')
 });
 
