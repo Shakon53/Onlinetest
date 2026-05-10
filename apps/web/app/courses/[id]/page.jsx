@@ -1,5 +1,6 @@
 'use client';
 
+import { use } from 'react';
 import { CheckCircle2, FileText, Lock, PlayCircle, Upload } from 'lucide-react';
 import { Shell } from '../../../components/Shell';
 import { useI18n } from '../../../components/I18nProvider';
@@ -7,7 +8,8 @@ import { courses, lessons } from '../../../lib/data';
 
 export default function CoursePlayerPage({ params }) {
   const { lang, t } = useI18n();
-  const course = courses.find((item) => item.id === params.id) || courses[0];
+  const { id } = use(params);
+  const course = courses.find((item) => item.id === id) || courses[0];
   const content = course.translations[lang];
   const activeLesson = lessons.find((lesson) => lesson.status === 'progress') || lessons[0];
 
