@@ -79,8 +79,8 @@ function CoursesContent() {
         </div>
       </div>
 
-      {/* Category pills */}
-      <div className="mt-5 flex flex-wrap gap-2">
+      {/* Category pills - scrollable on mobile */}
+      <div className="mt-4 flex gap-2 overflow-x-auto pb-1 scrollbar-hide sm:flex-wrap">
         <button
           onClick={() => setCategory('all')}
           className={`rounded-full px-4 py-2 text-sm font-semibold transition ${category === 'all' ? 'bg-brand-600 text-white shadow-md' : 'bg-white shadow-sm dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800'}`}

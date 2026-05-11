@@ -8,15 +8,12 @@ import { Shell } from '../../../components/Shell';
 import { useI18n } from '../../../components/I18nProvider';
 import { apiRequest, getSession } from '../../../lib/api';
 
-const DEMO_USERS = [
-  { _id: '1', name: 'Administrator', email: 'admin@onlinetest.app', role: 'admin', status: 'active', createdAt: '2024-01-01' },
-  { _id: '2', name: 'Алия Нурланова', email: 'teacher1@onlinetest.app', role: 'teacher', status: 'active', createdAt: '2024-01-15' },
-  { _id: '3', name: 'Данияр Абишев', email: 'teacher2@onlinetest.app', role: 'teacher', status: 'active', createdAt: '2024-01-20' },
-  { _id: '4', name: 'Aruzhan Seitkali', email: 'aruzhan@uni.kz', role: 'student', status: 'active', createdAt: '2024-02-01' },
-  { _id: '5', name: 'Dias Kenzhebayev', email: 'dias@uni.kz', role: 'student', status: 'active', createdAt: '2024-02-03' },
-  { _id: '6', name: 'Mikhail Ivanov', email: 'mikhail@uni.kz', role: 'student', status: 'blocked', createdAt: '2024-02-05' },
-  { _id: '7', name: 'Zarina Bekova', email: 'zarina@uni.kz', role: 'student', status: 'active', createdAt: '2024-02-07' },
-  { _id: '8', name: 'Nurlan Seilov', email: 'nurlan@uni.kz', role: 'student', status: 'active', createdAt: '2024-02-10' }
+// Local demo accounts (always present)
+const LOCAL_DEMO_ACCOUNTS = [
+  { _id: 'local_admin1', name: 'Администратор 1', email: 'admin1@lms.kz', role: 'admin',   status: 'active', createdAt: '2025-01-01' },
+  { _id: 'local_admin2', name: 'Администратор 2', email: 'admin2@lms.kz', role: 'admin',   status: 'active', createdAt: '2025-01-01' },
+  { _id: 'local_t1',     name: 'Преподаватель 1', email: 'teacher1@lms.kz', role: 'teacher', status: 'active', createdAt: '2025-01-01' },
+  { _id: 'local_t2',     name: 'Преподаватель 2', email: 'teacher2@lms.kz', role: 'teacher', status: 'active', createdAt: '2025-01-01' },
 ];
 
 const ROLE_COLORS = {
@@ -29,17 +26,41 @@ export default function AdminUsersPage() {
   const { t } = useI18n();
   const router = useRouter();
   const [ready, setReady] = useState(false);
-  const [users, setUsers] = useState(DEMO_USERS);
+  const [users, setUsers] = useState([]);
   const [query, setQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [actionMsg, setActionMsg] = useState('');
 
   useEffect(() => {
-    const user = getSession();
-    if (!user || user.role !== 'admin') { router.replace('/auth/login'); return; }
+    const session = getSession();
+    if (!session || session.role !== 'admin') { router.replace('/auth/login'); return; }
+
+    // Build user list: local demo accounts + localStorage registered students
+    const registered = JSON.parse(localStorage.getItem('lms_registered_users') || '[]');
+    const registeredUsers = registered.map((u, i) => ({
+      _id: `reg_${i}`,
+      name: u.name || u.email.split('@')[0],
+      email: u.email,
+      role: u.role || 'student',
+      status: u.blocked ? 'blocked' : 'active',
+      createdAt: u.createdAt || new Date().toISOString().split('T')[0]
+    }));
+
+    const allUsers = [...LOCAL_DEMO_ACCOUNTS, ...registeredUsers];
+    setUsers(allUsers);
     setReady(true);
+
+    // Also try to fetch from backend if available
     apiRequest('/admin/users')
-      .then((data) => { if (data.users?.length) setUsers(data.users); })
+      .then((data) => {
+        if (data.users?.length) {
+          const backendUsers = data.users.map(u => ({
+            ...u,
+            status: u.isBlocked ? 'blocked' : 'active'
+          }));
+          setUsers([...LOCAL_DEMO_ACCOUNTS, ...backendUsers]);
+        }
+      })
       .catch(() => {});
   }, [router]);
 

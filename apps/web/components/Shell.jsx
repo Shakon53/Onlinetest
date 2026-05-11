@@ -108,19 +108,19 @@ export function Shell({ children }) {
               </button>
             )}
 
-            {/* Language selector */}
+            {/* Language selector - hidden on mobile */}
             <select
               value={lang}
               onChange={(e) => setLang(e.target.value)}
-              className="rounded-full border-0 bg-white px-3 py-2 text-sm shadow-sm dark:bg-slate-900 cursor-pointer"
+              className="hidden sm:block rounded-full border-0 bg-white px-3 py-2 text-sm shadow-sm dark:bg-slate-900 cursor-pointer"
             >
               {languages.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
             </select>
 
-            {/* Theme toggle */}
+            {/* Theme toggle - hidden on mobile */}
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="rounded-full bg-white p-2 shadow-sm dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800"
+              className="hidden sm:block rounded-full bg-white p-2 shadow-sm dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800"
               title="Toggle theme"
             >
               {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
@@ -128,8 +128,8 @@ export function Shell({ children }) {
 
             {user ? (
               <>
-                {/* Notifications */}
-                <Link href="/notifications" className="relative rounded-full bg-white p-2 shadow-sm dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800">
+                {/* Notifications - hidden on mobile (in bottom nav) */}
+                <Link href="/notifications" className="hidden sm:block relative rounded-full bg-white p-2 shadow-sm dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800">
                   <Bell size={18} />
                   <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-rose-500" />
                 </Link>
@@ -191,23 +191,44 @@ export function Shell({ children }) {
                   {link.label}
                 </Link>
               ))}
+              {/* Language + Theme row in mobile menu */}
+              <div className="mt-3 flex items-center gap-2 border-t border-slate-200 pt-3 dark:border-slate-700">
+                <select
+                  value={lang}
+                  onChange={(e) => setLang(e.target.value)}
+                  className="flex-1 rounded-2xl border-0 bg-slate-100 dark:bg-slate-800 px-3 py-2.5 text-sm font-medium cursor-pointer focus:outline-none"
+                >
+                  {languages.map((l) => <option key={l.code} value={l.code}>{l.label}</option>)}
+                </select>
+                <button
+                  onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                  className="flex items-center gap-2 rounded-2xl bg-slate-100 dark:bg-slate-800 px-4 py-2.5 text-sm font-medium"
+                >
+                  {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                  {theme === 'dark' ? 'Светлая' : 'Тёмная'}
+                </button>
+              </div>
+
               {user ? (
-                <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-700">
+                <div className="mt-2 border-t border-slate-200 pt-2 dark:border-slate-700">
+                  <div className="flex items-center gap-3 px-4 py-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-sm font-bold text-white">
+                      {user.name?.[0]?.toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold">{user.name}</p>
+                      <p className="text-xs text-slate-500 capitalize">{user.role}</p>
+                    </div>
+                  </div>
                   <Link href="/profile" className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800">
                     <User size={18} className="text-brand-600" />{t.navProfile}
-                  </Link>
-                  <Link href="/notifications" className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800">
-                    <Bell size={18} className="text-brand-600" />{t.navNotifications}
-                  </Link>
-                  <Link href="/chat" className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800">
-                    <MessageCircle size={18} className="text-brand-600" />{t.navChat}
                   </Link>
                   <button onClick={handleLogout} className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40">
                     <LogOut size={18} />{t.logout}
                   </button>
                 </div>
               ) : (
-                <div className="mt-3 flex gap-3 border-t border-slate-200 pt-3 dark:border-slate-700">
+                <div className="mt-2 flex gap-3 border-t border-slate-200 pt-3 dark:border-slate-700">
                   <Link href="/auth/login" className="flex-1 rounded-2xl bg-slate-100 px-4 py-3 text-center text-sm font-semibold dark:bg-slate-800">{t.login}</Link>
                   <Link href="/auth/register" className="flex-1 rounded-2xl bg-brand-600 px-4 py-3 text-center text-sm font-semibold text-white">{t.register}</Link>
                 </div>
@@ -217,7 +238,39 @@ export function Shell({ children }) {
         )}
       </header>
 
-      <main>{children}</main>
+      <main className="pb-16 lg:pb-0">{children}</main>
+
+      {/* Mobile bottom navigation */}
+      {user && (
+        <nav className="fixed bottom-0 left-0 right-0 z-40 lg:hidden border-t border-slate-200/80 dark:border-slate-700/80 bg-white/95 dark:bg-slate-950/95 backdrop-blur-xl">
+          <div className="flex items-center justify-around px-2 py-2">
+            {[
+              { href: '/courses', icon: BookOpen, label: lang === 'ru' ? 'Курсы' : lang === 'kk' ? 'Курстар' : 'Courses' },
+              { href: '/dashboard', icon: LayoutDashboard, label: lang === 'ru' ? 'Главная' : lang === 'kk' ? 'Басты' : 'Home' },
+              { href: '/achievements', icon: Trophy, label: lang === 'ru' ? 'Награды' : lang === 'kk' ? 'Жетістік' : 'Awards' },
+              { href: '/profile', icon: User, label: lang === 'ru' ? 'Профиль' : lang === 'kk' ? 'Профиль' : 'Profile' },
+            ].map(item => (
+              <Link key={item.href} href={item.href}
+                className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-2xl transition-all ${
+                  pathname.startsWith(item.href)
+                    ? 'text-brand-600 dark:text-blue-400'
+                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                }`}>
+                <item.icon size={20} />
+                <span className="text-[10px] font-semibold">{item.label}</span>
+              </Link>
+            ))}
+            <button
+              onClick={() => setMobileOpen(o => !o)}
+              className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-2xl transition-all ${
+                mobileOpen ? 'text-brand-600' : 'text-slate-400'
+              }`}>
+              <Menu size={20} />
+              <span className="text-[10px] font-semibold">{lang === 'ru' ? 'Меню' : 'Menu'}</span>
+            </button>
+          </div>
+        </nav>
+      )}
 
       <AIAssistant />
       <footer className="mt-20 border-t border-slate-200/60 bg-white/50 py-10 dark:border-slate-800 dark:bg-slate-950/50">

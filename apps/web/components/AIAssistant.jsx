@@ -93,7 +93,7 @@ export default function AIAssistant() {
       {/* Floating button */}
       <button
         onClick={() => setOpen(o => !o)}
-        className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 ${open ? 'bg-slate-700 dark:bg-slate-600' : 'bg-gradient-to-br from-brand-500 to-violet-600'}`}
+        className={`fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-50 w-12 h-12 lg:w-14 lg:h-14 rounded-full shadow-2xl flex items-center justify-center transition-all hover:scale-110 ${open ? 'bg-slate-700 dark:bg-slate-600' : 'bg-gradient-to-br from-brand-500 to-violet-600'}`}
         aria-label="AI Ассистент"
       >
         {open ? <X className="text-white" size={22} /> : <Sparkles className="text-white" size={22} />}
@@ -104,7 +104,7 @@ export default function AIAssistant() {
 
       {/* Chat panel */}
       {open && (
-        <div className="fixed bottom-24 right-6 z-50 w-[360px] max-h-[520px] flex flex-col rounded-3xl shadow-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="fixed bottom-0 right-0 left-0 lg:bottom-24 lg:right-6 lg:left-auto z-50 w-full lg:w-[360px] max-h-[85vh] lg:max-h-[520px] flex flex-col rounded-t-3xl lg:rounded-3xl shadow-2xl bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 lg:border overflow-hidden" style={{bottom: 'calc(env(safe-area-inset-bottom) + 64px)'}}>
           {/* Header */}
           <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-brand-600 to-violet-600 text-white flex-shrink-0">
             <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">

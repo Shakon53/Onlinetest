@@ -350,7 +350,7 @@ export default function CoursePlayerPage({ params }) {
       <div
         ref={theoryRef}
         className="flex-1 overflow-y-auto pr-2 prose-content"
-        style={{ maxHeight: 'calc(100vh - 400px)' }}
+        style={{ maxHeight: 'clamp(300px, calc(100vh - 380px), 800px)' }}
       >
         <div
           className="text-slate-700 dark:text-slate-300 leading-relaxed"
@@ -612,26 +612,26 @@ export default function CoursePlayerPage({ params }) {
 
   return (
     <Shell>
-      <div className="mx-auto max-w-7xl px-4 py-6">
+      <div className="mx-auto max-w-7xl px-2 sm:px-4 py-3 sm:py-6">
         {/* Breadcrumb */}
-        <div className="flex items-center gap-2 text-sm text-slate-500 mb-6">
-          <Link href="/courses" className="hover:text-brand-600 flex items-center gap-1">
+        <div className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-500 mb-3 sm:mb-6 overflow-hidden">
+          <Link href="/courses" className="hover:text-brand-600 flex items-center gap-1 flex-shrink-0">
             <ChevronLeft size={14} /> Курсы
           </Link>
           <span>/</span>
-          <span className="font-semibold text-slate-700 dark:text-slate-300 truncate max-w-xs">{content?.title}</span>
-          <span>/</span>
-          <span className="text-brand-600">Урок {activeId}</span>
+          <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">{content?.title}</span>
+          <span className="flex-shrink-0">/</span>
+          <span className="text-brand-600 flex-shrink-0">Урок {activeId}</span>
         </div>
 
-        <div className="flex gap-6 items-start">
+        <div className="flex gap-3 sm:gap-6 items-start">
           {/* Sidebar */}
           <Sidebar />
 
           {/* Main content */}
           <main className="flex-1 min-w-0">
             {/* Phase tabs */}
-            <div className="glass rounded-3xl overflow-hidden mb-4">
+            <div className="glass rounded-2xl sm:rounded-3xl overflow-hidden mb-4">
               <div className="flex border-b border-slate-200 dark:border-slate-700">
                 {[
                   { id: PHASE.THEORY, icon: BookOpen, label: 'Теория' },
@@ -645,7 +645,7 @@ export default function CoursePlayerPage({ params }) {
                       if (tab.id === PHASE.QUIZ && !theoryRead && !passed) return;
                       setPhase(tab.id);
                     }}
-                    className={`flex items-center gap-2 px-5 py-4 text-sm font-semibold transition-all flex-1 justify-center ${
+                    className={`flex items-center gap-1.5 px-3 sm:px-5 py-3 sm:py-4 text-xs sm:text-sm font-semibold transition-all flex-1 justify-center ${
                       phase === tab.id
                         ? 'bg-brand-600 text-white'
                         : (tab.id !== PHASE.THEORY && !theoryRead && !passed)
@@ -653,19 +653,20 @@ export default function CoursePlayerPage({ params }) {
                           : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
                     }`}
                   >
-                    <tab.icon size={16} />
-                    {tab.label}
+                    <tab.icon size={15} />
+                    <span className="hidden xs:inline sm:inline">{tab.label}</span>
+                    <span className="inline sm:hidden text-[10px]">{tab.label}</span>
                     {passed && tab.id === PHASE.QUIZ && (
-                      <CheckCircle2 size={14} className="text-emerald-400" />
+                      <CheckCircle2 size={12} className="text-emerald-400" />
                     )}
                     {(!theoryRead && !passed && tab.id !== PHASE.THEORY) && (
-                      <Lock size={12} className="opacity-50" />
+                      <Lock size={10} className="opacity-50" />
                     )}
                   </button>
                 ))}
               </div>
 
-              <div className="p-6" style={{ minHeight: '520px' }}>
+              <div className="p-3 sm:p-6" style={{ minHeight: '60vh' }}>
                 {phase === PHASE.THEORY && <TheoryView />}
                 {phase === PHASE.PRACTICE && <PracticeView />}
                 {phase === PHASE.QUIZ && <QuizView />}

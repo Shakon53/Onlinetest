@@ -10,8 +10,30 @@
   color-scheme: dark;
 }
 
-body {
+html, body {
   @apply bg-slate-50 text-slate-950 antialiased dark:bg-slate-950 dark:text-slate-50;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
+}
+
+/* Mobile safe area support */
+@supports (padding: env(safe-area-inset-bottom)) {
+  .mobile-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Better touch targets on mobile */
+@media (max-width: 640px) {
+  button, a {
+    min-height: 36px;
+  }
+  
+  .prose-content {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
 }
 
 .glass {
