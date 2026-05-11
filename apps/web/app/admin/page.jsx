@@ -3,79 +3,128 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Award, Ban, BarChart3, BookOpen, Languages, LineChart, Shield, Users } from 'lucide-react';
+import {
+  Activity, Award, Ban, BarChart3, BookOpen, ChevronRight,
+  GraduationCap, Shield, TrendingUp, UserCheck, Users
+} from 'lucide-react';
 import { Shell } from '../../components/Shell';
-import { useI18n } from '../../components/I18nProvider';
-import { getSession, apiRequest } from '../../lib/api';
+import { getSession } from '../../lib/api';
+import { courses, getLessons } from '../../lib/data';
 
 export default function AdminPage() {
-  const { t } = useI18n();
   const router = useRouter();
   const [ready, setReady] = useState(false);
-  const [stats, setStats] = useState({ users: 248, courses: 96, certificates: 1204, progressRecords: 2150 });
+  const [stats, setStats] = useState({ users: 0, courses: 0, lessons: 0, certs: 0, lessonsPassed: 0, students: 0, teachers: 0, admins: 2 });
 
   useEffect(() => {
     const user = getSession();
     if (!user) { router.replace('/auth/login'); return; }
     if (user.role !== 'admin') { router.replace('/dashboard'); return; }
     setReady(true);
-    apiRequest('/admin/analytics').then((data) => setStats(data)).catch(() => {});
+
+    const registered = JSON.parse(localStorage.getItem('lms_registered_users') || '[]');
+    const allUsers = [
+      { role: 'admin' }, { role: 'admin' }, { role: 'teacher' }, { role: 'teacher' },
+      ...registered
+    ];
+    const students = allUsers.filter(u => u.role === 'student').length;
+    const teachers = allUsers.filter(u => u.role === 'teacher').length;
+    const admins = allUsers.filter(u => u.role === 'admin').length;
+    const totalLessons = courses.reduce((s, c) => s + getLessons(c.id).length, 0);
+
+    let certs = 0, lessonsPassed = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key) continue;
+      if (key.includes('::exam_')) {
+        try { const v = JSON.parse(localStorage.getItem(key)); if (v?.passed) certs++; } catch {}
+      }
+      if (key.includes('::progress_')) {
+        try {
+          const prog = JSON.parse(localStorage.getItem(key));
+          lessonsPassed += Object.values(prog).filter(p => p?.passed).length;
+        } catch {}
+      }
+    }
+    setStats({ users: allUsers.length, courses: courses.length, lessons: totalLessons, certs, lessonsPassed, students, teachers, admins });
   }, [router]);
 
   if (!ready) return null;
 
   const quickStats = [
-    { label: t.totalUsers, value: stats.users, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
-    { label: t.courses, value: stats.courses, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/30' },
-    { label: t.certificates, value: stats.certificates, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },
-    { label: 'Progress Records', value: stats.progressRecords, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/30' }
+    { label: 'Всего пользователей', value: stats.users, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30', sub: `${stats.students} студ. · ${stats.teachers} преп. · ${stats.admins} адм.` },
+    { label: 'Курсов в системе', value: stats.courses, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/30', sub: `${stats.lessons} уроков всего` },
+    { label: 'Сертификатов выдано', value: stats.certs, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/30', sub: 'экзаменов успешно сдано' },
+    { label: 'Уроков пройдено', value: stats.lessonsPassed, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/30', sub: 'суммарно по всем студентам' },
   ];
 
   const panels = [
-    { href: '/admin/users', icon: Users, label: t.manageUsers, desc: 'View, block, and manage all platform users.', color: 'text-blue-600' },
-    { href: '/admin/analytics', icon: BarChart3, label: t.platformAnalytics, desc: 'Enrollment trends, completion rates and GPA reports.', color: 'text-violet-600' },
-    { href: '/courses', icon: BookOpen, label: t.manageCourses, desc: 'Browse and manage published and draft courses.', color: 'text-emerald-600' },
-    { href: '/admin/users', icon: Ban, label: 'Block / Unblock', desc: 'Restrict access for users violating platform rules.', color: 'text-rose-600' },
-    { href: '/certificate', icon: Award, label: t.certificates, desc: 'View issued certificates and revoke if needed.', color: 'text-amber-600' },
-    { href: '/admin/analytics', icon: Languages, label: 'Languages & Settings', desc: 'Manage multilingual content and platform configuration.', color: 'text-teal-600' }
+    { href: '/admin/users', icon: Users, label: 'Управление пользователями', desc: `${stats.users} пользователей — просмотр, блокировка, управление ролями.`, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30' },
+    { href: '/admin/analytics', icon: BarChart3, label: 'Аналитика платформы', desc: 'Тренды регистраций, процент завершения, распределение ролей.', color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/30' },
+    { href: '/courses', icon: BookOpen, label: 'Все курсы', desc: `${stats.courses} курсов · ${stats.lessons} уроков — просмотр контента.`, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },
+    { href: '/admin/users', icon: Ban, label: 'Блокировка пользователей', desc: 'Ограничение доступа для нарушителей правил платформы.', color: 'text-rose-600', bg: 'bg-rose-50 dark:bg-rose-950/30' },
+    { href: '/leaderboard', icon: TrendingUp, label: 'Рейтинг студентов', desc: 'Топ студентов по очкам, курсам и результатам экзаменов.', color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/30' },
+    { href: '/admin/analytics', icon: Activity, label: 'Активность системы', desc: 'Просмотр активности пользователей и событий платформы.', color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-950/30' },
   ];
 
   return (
     <Shell>
       <section className="mx-auto max-w-7xl px-4 py-10">
-        <div className="mb-8 flex items-center gap-3">
-          <div className="rounded-2xl bg-rose-600 p-3 text-white">
-            <Shield size={24} />
+        <div className="mb-8 flex items-center gap-4">
+          <div className="rounded-2xl bg-rose-600 p-3 text-white shadow-lg">
+            <Shield size={26} />
           </div>
           <div>
-            <h1 className="text-4xl font-black">{t.adminTitle}</h1>
-            <p className="text-slate-500">Full platform control</p>
+            <h1 className="text-4xl font-black">Панель администратора</h1>
+            <p className="text-slate-500">Полный контроль платформы</p>
           </div>
         </div>
 
-        {/* Quick stats */}
+        {/* Real stats */}
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {quickStats.map((s) => (
             <div key={s.label} className={`glass rounded-3xl p-5 ${s.bg}`}>
-              <p className="text-sm font-medium text-slate-600 dark:text-slate-400">{s.label}</p>
+              <p className="text-sm font-medium text-slate-500">{s.label}</p>
               <p className={`mt-2 text-4xl font-black ${s.color}`}>{s.value.toLocaleString()}</p>
+              <p className="mt-1 text-xs text-slate-400">{s.sub}</p>
             </div>
           ))}
         </div>
 
-        {/* Panel links */}
+        {/* Role distribution */}
+        <div className="mb-8 glass rounded-3xl p-6">
+          <h2 className="mb-4 text-lg font-bold">Распределение по ролям</h2>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl bg-rose-50 dark:bg-rose-950/30 p-4 flex items-center gap-4">
+              <div className="rounded-xl bg-rose-100 dark:bg-rose-900/40 p-3"><Shield className="text-rose-600" size={22} /></div>
+              <div><p className="text-3xl font-black text-rose-600">{stats.admins}</p><p className="text-sm text-slate-500">Администраторов</p></div>
+            </div>
+            <div className="rounded-2xl bg-violet-50 dark:bg-violet-950/30 p-4 flex items-center gap-4">
+              <div className="rounded-xl bg-violet-100 dark:bg-violet-900/40 p-3"><GraduationCap className="text-violet-600" size={22} /></div>
+              <div><p className="text-3xl font-black text-violet-600">{stats.teachers}</p><p className="text-sm text-slate-500">Преподавателей</p></div>
+            </div>
+            <div className="rounded-2xl bg-blue-50 dark:bg-blue-950/30 p-4 flex items-center gap-4">
+              <div className="rounded-xl bg-blue-100 dark:bg-blue-900/40 p-3"><UserCheck className="text-blue-600" size={22} /></div>
+              <div><p className="text-3xl font-black text-blue-600">{stats.students}</p><p className="text-sm text-slate-500">Студентов</p></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action panels */}
+        <h2 className="mb-4 text-xl font-bold">Быстрые действия</h2>
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {panels.map((item) => (
-            <Link
-              key={item.href + item.label}
-              href={item.href}
-              className="glass card-hover rounded-3xl p-6 block"
-            >
-              <div className={`mb-4 inline-flex rounded-2xl bg-white p-3 shadow-sm dark:bg-slate-900 ${item.color}`}>
-                <item.icon size={22} />
+            <Link key={item.href + item.label} href={item.href} className="glass card-hover rounded-3xl p-6 block group">
+              <div className={`mb-4 inline-flex rounded-2xl p-3 ${item.bg}`}>
+                <item.icon className={item.color} size={22} />
               </div>
-              <h2 className="text-xl font-bold">{item.label}</h2>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{item.desc}</p>
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <h2 className="text-lg font-bold">{item.label}</h2>
+                  <p className="mt-1 text-sm text-slate-500">{item.desc}</p>
+                </div>
+                <ChevronRight className="mt-1 flex-shrink-0 text-slate-400 transition-colors group-hover:text-brand-600" size={18} />
+              </div>
             </Link>
           ))}
         </div>
