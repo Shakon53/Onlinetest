@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { Bell, BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, MessageCircle, Moon, Search, Shield, Sun, Trophy, User, X } from 'lucide-react';
+import { Bell, BookOpen, GraduationCap, LayoutDashboard, LogOut, Menu, MessageCircle, Moon, Search, Shield, Sun, Trophy, User, X, Flame } from 'lucide-react';
 import { languages } from '../lib/i18n';
 import { useI18n } from './I18nProvider';
 import { getSession, logout } from '../lib/api';
+import AIAssistant from './AIAssistant';
 
 export function Shell({ children }) {
   const { lang, setLang, theme, setTheme, t } = useI18n();
@@ -46,6 +47,7 @@ export function Shell({ children }) {
     { href: '/courses', label: t.navCourses, icon: BookOpen },
     ...(user ? [{ href: '/dashboard', label: t.navDashboard, icon: LayoutDashboard }] : []),
     ...(user ? [{ href: '/leaderboard', label: t.navLeaderboard, icon: Trophy }] : []),
+    ...(user ? [{ href: '/achievements', label: 'Достижения', icon: Flame }] : []),
     ...(isTeacher ? [{ href: '/teacher', label: t.navTeacher, icon: User, accent: 'violet' }] : []),
     ...(isAdmin ? [{ href: '/admin', label: t.navAdmin, icon: Shield, accent: 'rose' }] : [])
   ];
@@ -217,6 +219,7 @@ export function Shell({ children }) {
 
       <main>{children}</main>
 
+      <AIAssistant />
       <footer className="mt-20 border-t border-slate-200/60 bg-white/50 py-10 dark:border-slate-800 dark:bg-slate-950/50">
         <div className="mx-auto max-w-7xl px-4 text-center text-sm text-slate-500">
           <div className="mb-4 flex justify-center gap-2">

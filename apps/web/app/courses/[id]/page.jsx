@@ -1,11 +1,11 @@
 'use client';
 
-import { use, useEffect, useState, useRef } from 'react';
+import { use, useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import {
   BookOpen, CheckCircle2, ChevronLeft, ChevronRight, Clock,
-  Lock, PlayCircle, Trophy, XCircle, AlertCircle, RotateCcw,
-  FileText, Target, Star, Award, Zap
+  Lock, Trophy, XCircle, AlertCircle, RotateCcw,
+  FileText, Target, Star, Zap, PenLine, Flame, GraduationCap, Timer
 } from 'lucide-react';
 import { Shell } from '../../../components/Shell';
 import { useI18n } from '../../../components/I18nProvider';
@@ -61,7 +61,8 @@ const DIFF = {
 
 // ── PHASE ENUM ────────────────────────────────────────────────────────────
 const PHASE = { THEORY: 'theory', PRACTICE: 'practice', QUIZ: 'quiz', RESULT: 'result' };
-const PASS_THRESHOLD = 0.6; // 60% to pass
+const PASS_THRESHOLD = 0.6;
+const QUIZ_SECONDS = 15 * 60; // 15 minutes per quiz
 
 export default function CoursePlayerPage({ params }) {
   const { id } = use(params);
@@ -80,10 +81,19 @@ export default function CoursePlayerPage({ params }) {
   const [answers, setAnswers] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [quizScore, setQuizScore] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(QUIZ_SECONDS);
+  const timerRef = useRef(null);
+
+  // notes
+  const [note, setNote] = useState('');
+  const [noteSaved, setNoteSaved] = useState(false);
 
   // theory scroll tracking
   const theoryRef = useRef(null);
   const [theoryRead, setTheoryRead] = useState(false);
+
+  // streak
+  const [streak, setStreak] = useState(0);
 
   useEffect(() => {
     const p = loadProgress(id);
@@ -103,7 +113,40 @@ export default function CoursePlayerPage({ params }) {
     setSubmitted(false);
     setQuizScore(null);
     setTheoryRead(false);
+    setTimeLeft(QUIZ_SECONDS);
+    clearInterval(timerRef.current);
+    // load note
+    const savedNote = localStorage.getItem(`note_${id}_${activeId}`) || '';
+    setNote(savedNote);
+    setNoteSaved(false);
   }, [activeId]);
+
+  // Streak tracking
+  useEffect(() => {
+    const today = new Date().toDateString();
+    const last = localStorage.getItem('streak_last');
+    const count = parseInt(localStorage.getItem('streak_count') || '0');
+    if (last === today) { setStreak(count); return; }
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    const newCount = last === yesterday ? count + 1 : 1;
+    localStorage.setItem('streak_last', today);
+    localStorage.setItem('streak_count', String(newCount));
+    setStreak(newCount);
+  }, []);
+
+  // Timer
+  useEffect(() => {
+    if (phase !== PHASE.QUIZ || submitted) return;
+    clearInterval(timerRef.current);
+    setTimeLeft(QUIZ_SECONDS);
+    timerRef.current = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) { clearInterval(timerRef.current); handleSubmitQuiz(); return 0; }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [phase, submitted]);
 
   // track theory scroll
   useEffect(() => {
@@ -142,7 +185,14 @@ export default function CoursePlayerPage({ params }) {
   const totalPct = lessons.length ? Math.round((completedCount / lessons.length) * 100) : 0;
 
   // ── quiz submit ──────────────────────────────────────────────────────────
+  function fmtTime(s) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2,'0')}`;
+  }
+
   function handleSubmitQuiz() {
+    clearInterval(timerRef.current);
     const quiz = activeLesson.quiz || [];
     let correct = 0;
     quiz.forEach(q => { if (answers[q.id] === q.correct) correct++; });
@@ -161,6 +211,13 @@ export default function CoursePlayerPage({ params }) {
     setAnswers({});
     setSubmitted(false);
     setQuizScore(null);
+    setTimeLeft(QUIZ_SECONDS);
+  }
+
+  function saveNote() {
+    localStorage.setItem(`note_${id}_${activeId}`, note);
+    setNoteSaved(true);
+    setTimeout(() => setNoteSaved(false), 2000);
   }
 
   function goToNextLesson() {
@@ -189,6 +246,24 @@ export default function CoursePlayerPage({ params }) {
             <div className="h-2 rounded-full bg-white transition-all" style={{ width: `${totalPct}%` }} />
           </div>
           <p className="mt-1.5 text-xs opacity-70">{completedCount} из {lessons.length} уроков</p>
+        </div>
+      </div>
+
+      {/* Streak + Exam access */}
+      <div className="flex items-center justify-between px-4 py-2 bg-white/10 dark:bg-black/10">
+        <div className="flex items-center gap-1.5 text-white/80 text-xs">
+          <Flame size={14} className={streak > 0 ? 'text-orange-300' : ''} />
+          <span>{streak} {streak === 1 ? 'день' : streak < 5 ? 'дня' : 'дней'}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link href={`/roadmap/${id}`}
+            className="text-xs text-white/60 hover:text-white/90">Карта</Link>
+          {completedCount === lessons.length && (
+            <Link href={`/courses/${id}/exam`}
+              className="flex items-center gap-1 text-xs font-bold text-amber-300 hover:text-amber-200">
+              <GraduationCap size={14} /> Экзамен
+            </Link>
+          )}
         </div>
       </div>
 
@@ -258,12 +333,31 @@ export default function CoursePlayerPage({ params }) {
       <div
         ref={theoryRef}
         className="flex-1 overflow-y-auto pr-2 prose-content"
-        style={{ maxHeight: 'calc(100vh - 340px)' }}
+        style={{ maxHeight: 'calc(100vh - 400px)' }}
       >
         <div
           className="text-slate-700 dark:text-slate-300 leading-relaxed"
           dangerouslySetInnerHTML={{ __html: renderMarkdown(activeLesson.theory?.[lang] || activeLesson.theory?.ru || '') }}
         />
+      </div>
+
+      {/* Notes */}
+      <div className="mt-4 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700">
+          <PenLine size={14} className="text-amber-500" />
+          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">Мои заметки к уроку {activeLesson.id}</span>
+          {noteSaved && <span className="ml-auto text-xs text-emerald-500 font-semibold">Сохранено ✓</span>}
+        </div>
+        <textarea
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          placeholder="Пишите заметки, ключевые моменты, вопросы..."
+          className="w-full px-3 py-2.5 text-sm bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 resize-none focus:outline-none"
+          rows={3}
+        />
+        <div className="flex justify-end px-3 py-1.5 bg-slate-50 dark:bg-slate-800/50">
+          <button onClick={saveNote} className="text-xs font-semibold text-brand-600 hover:text-brand-500">Сохранить заметку</button>
+        </div>
       </div>
 
       <div className="mt-6 flex items-center justify-between gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
@@ -353,8 +447,14 @@ export default function CoursePlayerPage({ params }) {
           <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Тест · Урок {activeLesson.id}</p>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white">Контрольный тест</h1>
         </div>
-        <div className="ml-auto text-sm text-slate-500">
-          {Object.keys(answers).length} / {quiz.length} ответов
+        <div className="ml-auto flex items-center gap-3">
+          {!submitted && (
+            <div className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-sm font-bold ${timeLeft < 120 ? 'bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 animate-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>
+              <Timer size={14} />
+              {fmtTime(timeLeft)}
+            </div>
+          )}
+          <span className="text-sm text-slate-500">{Object.keys(answers).length}/{quiz.length}</span>
         </div>
       </div>
 
