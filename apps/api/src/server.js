@@ -1,4 +1,5 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config({ path: new URL('../.env', import.meta.url) });
 import http from 'http';
 import { Server } from 'socket.io';
 import { createApp } from './app.js';
