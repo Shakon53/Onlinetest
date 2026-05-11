@@ -161,20 +161,34 @@ export default function CoursePlayerPage({ params }) {
     return () => clearInterval(timerRef.current);
   }, [phase, submitted]);
 
-  // track theory scroll
+  // track theory scroll — also auto-unlock after DOM renders
   useEffect(() => {
-    if (phase !== PHASE.THEORY || !theoryRef.current) return;
+    if (phase !== PHASE.THEORY) return;
+    // If lesson already passed, no need to re-read theory
+    if (progress[activeId]?.passed) { setTheoryRead(true); return; }
+
+    if (!theoryRef.current) return;
     const el = theoryRef.current;
+
     const check = () => {
+      if (!el) return;
       const scrolled = el.scrollTop + el.clientHeight;
       const total = el.scrollHeight;
-      if (scrolled >= total * 0.8) setTheoryRead(true);
+      if (total === 0 || scrolled >= total * 0.75) setTheoryRead(true);
     };
+
     el.addEventListener('scroll', check);
-    // short content auto-passes
-    if (el.scrollHeight <= el.clientHeight + 10) setTheoryRead(true);
-    return () => el.removeEventListener('scroll', check);
-  }, [phase, activeId]);
+
+    // Run check after HTML content is rendered (dangerouslySetInnerHTML delay)
+    const t1 = setTimeout(check, 100);
+    const t2 = setTimeout(check, 500);
+    const t3 = setTimeout(check, 1500);
+
+    return () => {
+      el.removeEventListener('scroll', check);
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
+    };
+  }, [phase, activeId, progress]);
 
   if (!authReady) return (
     <Shell><div className="flex min-h-[50vh] items-center justify-center"><div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" /></div></Shell>
@@ -381,7 +395,14 @@ export default function CoursePlayerPage({ params }) {
         <div className="flex items-center gap-2">
           {theoryRead
             ? <div className="flex items-center gap-1.5 text-emerald-600 text-sm font-semibold"><CheckCircle2 size={16} />Теория изучена</div>
-            : <div className="flex items-center gap-1.5 text-slate-400 text-sm"><AlertCircle size={16} />Прокрутите вниз для продолжения</div>
+            : (
+              <button
+                onClick={() => setTheoryRead(true)}
+                className="flex items-center gap-1.5 text-slate-500 hover:text-brand-600 text-sm font-medium transition-colors"
+              >
+                <CheckCircle2 size={16} />Отметить как прочитанное
+              </button>
+            )
           }
         </div>
         <button
