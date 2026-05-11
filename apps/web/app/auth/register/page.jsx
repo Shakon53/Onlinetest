@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Shell } from '../../../components/Shell';
 import { useI18n } from '../../../components/I18nProvider';
 import { apiRequest, saveSession } from '../../../lib/api';
+import { purgeOldUnprefixedData } from '../../../lib/storage';
 
 export default function RegisterPage() {
   const { t } = useI18n();
@@ -30,6 +31,7 @@ export default function RegisterPage() {
     try {
       const data = await apiRequest('/auth/register', { method: 'POST', body: JSON.stringify(form) });
       saveSession(data);
+      purgeOldUnprefixedData();
       saveToLocalRegistry(data.user || form);
       const role = data.user?.role;
       if (role === 'admin') router.push('/admin');
@@ -40,6 +42,7 @@ export default function RegisterPage() {
       if (form.role === 'student') {
         const localUser = { name: form.name, email: form.email, role: 'student' };
         saveSession({ user: localUser });
+        purgeOldUnprefixedData();
         saveToLocalRegistry(localUser);
         router.push('/dashboard');
       } else {

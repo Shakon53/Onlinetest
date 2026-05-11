@@ -7,6 +7,7 @@ import { Eye, EyeOff, GraduationCap, Lock, Mail } from 'lucide-react';
 import { Shell } from '../../../components/Shell';
 import { useI18n } from '../../../components/I18nProvider';
 import { apiRequest, saveSession } from '../../../lib/api';
+import { purgeOldUnprefixedData } from '../../../lib/storage';
 
 // Local demo accounts — work without backend
 const LOCAL_ACCOUNTS = [
@@ -44,6 +45,7 @@ function LoginForm() {
     );
     if (localMatch) {
       saveSession({ user: { name: localMatch.name, email: localMatch.email, role: localMatch.role } });
+      purgeOldUnprefixedData();
       setLoading(false);
       goAfterLogin(localMatch.role);
       return;
@@ -52,6 +54,7 @@ function LoginForm() {
     try {
       const data = await apiRequest('/auth/login', { method: 'POST', body: JSON.stringify(form) });
       saveSession(data);
+      purgeOldUnprefixedData();
       goAfterLogin(data.user?.role);
     } catch (error) {
       setStatus(error.message || 'Неверный email или пароль');
