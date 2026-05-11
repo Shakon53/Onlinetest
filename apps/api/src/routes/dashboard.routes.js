@@ -16,7 +16,7 @@ router.get('/student', requireAuth, asyncHandler(async (req, res) => {
   res.json({ currentScore: average, gpa: req.user.gpa, progress, recommendations });
 }));
 
-router.get('/leaderboard', requireAuth, asyncHandler(async (req, res) => {
+router.get('/leaderboard', asyncHandler(async (req, res) => {
   const allProgress = await Progress.find().populate('student', 'name email role');
   const scoreMap = {};
   for (const p of allProgress) {
