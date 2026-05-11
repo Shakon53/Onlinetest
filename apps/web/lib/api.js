@@ -16,7 +16,7 @@ export async function apiRequest(path, options = {}) {
 }
 
 export function saveSession({ token, user }) {
-  localStorage.setItem('lms_token', token);
+  if (token) localStorage.setItem('lms_token', token);
   localStorage.setItem('lms_user', JSON.stringify(user));
 }
 

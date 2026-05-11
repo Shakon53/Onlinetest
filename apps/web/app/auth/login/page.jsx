@@ -8,10 +8,12 @@ import { Shell } from '../../../components/Shell';
 import { useI18n } from '../../../components/I18nProvider';
 import { apiRequest, saveSession } from '../../../lib/api';
 
-const DEMO_ACCOUNTS = [
-  { label: 'Admin', email: 'admin@onlinetest.app', password: 'Admin@1234' },
-  { label: 'Teacher', email: 'teacher1@onlinetest.app', password: 'Teacher@1234' },
-  { label: 'Student', email: 'student@uni.kz', password: 'Student@1234' }
+// Local demo accounts — work without backend
+const LOCAL_ACCOUNTS = [
+  { email: 'admin1@lms.kz',   password: 'Admin@1234',   role: 'admin',   name: 'Администратор 1' },
+  { email: 'admin2@lms.kz',   password: 'Admin@5678',   role: 'admin',   name: 'Администратор 2' },
+  { email: 'teacher1@lms.kz', password: 'Teacher@1234', role: 'teacher', name: 'Преподаватель 1' },
+  { email: 'teacher2@lms.kz', password: 'Teacher@5678', role: 'teacher', name: 'Преподаватель 2' },
 ];
 
 export default function LoginPage() {
@@ -26,6 +28,19 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setStatus('');
+
+    // Check local demo accounts first (no backend needed)
+    const localMatch = LOCAL_ACCOUNTS.find(
+      a => a.email === form.email.trim().toLowerCase() && a.password === form.password
+    );
+    if (localMatch) {
+      saveSession({ user: { name: localMatch.name, email: localMatch.email, role: localMatch.role } });
+      setLoading(false);
+      if (localMatch.role === 'admin') router.push('/admin');
+      else router.push('/teacher');
+      return;
+    }
+
     try {
       const data = await apiRequest('/auth/login', { method: 'POST', body: JSON.stringify(form) });
       saveSession(data);
@@ -34,15 +49,10 @@ export default function LoginPage() {
       else if (role === 'teacher') router.push('/teacher');
       else router.push('/dashboard');
     } catch (error) {
-      setStatus(error.message || 'Invalid credentials');
+      setStatus(error.message || 'Неверный email или пароль');
     } finally {
       setLoading(false);
     }
-  }
-
-  function fillDemo(account) {
-    setForm({ email: account.email, password: account.password });
-    setStatus('');
   }
 
   return (
@@ -119,20 +129,26 @@ export default function LoginPage() {
             <Link href="/auth/register" className="text-sm font-semibold text-brand-600 hover:underline">{t.register}</Link>
           </div>
 
-          {/* Demo accounts */}
+          {/* Demo credentials */}
           <div className="mt-6 border-t border-slate-200/60 pt-5 dark:border-slate-700/60">
-            <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400">Quick demo login</p>
-            <div className="grid grid-cols-3 gap-2">
-              {DEMO_ACCOUNTS.map((acc) => (
+            <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-400">Демо-аккаунты</p>
+            <div className="space-y-2">
+              {LOCAL_ACCOUNTS.map((acc) => (
                 <button
-                  key={acc.label}
-                  onClick={() => fillDemo(acc)}
-                  className="rounded-xl bg-white px-2 py-2 text-xs font-semibold shadow-sm dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800"
+                  key={acc.email}
+                  type="button"
+                  onClick={() => { setForm({ email: acc.email, password: acc.password }); setStatus(''); }}
+                  className="w-full flex items-center justify-between rounded-xl bg-white dark:bg-slate-900 px-3 py-2.5 text-xs shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
                 >
-                  {acc.label}
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full flex-shrink-0 ${acc.role === 'admin' ? 'bg-rose-500' : 'bg-violet-500'}`} />
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">{acc.name}</span>
+                  </div>
+                  <span className="font-mono text-slate-400">{acc.email}</span>
                 </button>
               ))}
             </div>
+            <p className="mt-2 text-center text-xs text-slate-400">Нажмите на строку чтобы заполнить форму</p>
           </div>
         </div>
       </section>
