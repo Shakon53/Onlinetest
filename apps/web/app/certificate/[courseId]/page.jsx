@@ -6,6 +6,7 @@ import { ChevronLeft, Download, Share2, Award, CheckCircle2, Star } from 'lucide
 import { Shell } from '../../../components/Shell';
 import { useI18n } from '../../../components/I18nProvider';
 import { courses } from '../../../lib/data';
+import { getLS } from '../../../lib/storage';
 
 export default function CertificatePage({ params }) {
   const { courseId } = use(params);
@@ -22,7 +23,7 @@ export default function CertificatePage({ params }) {
   useEffect(() => {
     const session = JSON.parse(localStorage.getItem('lms_user') || 'null');
     setUser(session);
-    const result = JSON.parse(localStorage.getItem(`exam_${courseId}`) || 'null');
+    const result = getLS(`exam_${courseId}`, null);
     setExamResult(result);
     // Generate deterministic cert ID
     const seed = `${courseId}-${session?.email || 'anon'}-${result?.date || Date.now()}`;

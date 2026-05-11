@@ -5,6 +5,7 @@ import { Star } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useI18n } from './I18nProvider';
 import { getLessons } from '../lib/data';
+import { getLS } from '../lib/storage';
 
 export function CourseCard({ course }) {
   const { lang, t } = useI18n();
@@ -15,10 +16,10 @@ export function CourseCard({ course }) {
   useEffect(() => {
     const lessons = getLessons(course.id);
     if (!lessons.length) return;
-    const prog = JSON.parse(localStorage.getItem(`progress_${course.id}`) || '{}');
+    const prog = getLS(`progress_${course.id}`, {});
     const passed = lessons.filter(l => prog[l.id]?.passed).length;
     setRealProgress(Math.round((passed / lessons.length) * 100));
-    const exam = JSON.parse(localStorage.getItem(`exam_${course.id}`) || 'null');
+    const exam = getLS(`exam_${course.id}`, null);
     setExamPassed(exam?.passed || false);
   }, [course.id]);
 

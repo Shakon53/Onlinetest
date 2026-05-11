@@ -11,16 +11,16 @@ import {
 import { Shell } from '../../../components/Shell';
 import { useI18n } from '../../../components/I18nProvider';
 import { courses, getLessons } from '../../../lib/data';
+import { getLS, setLS } from '../../../lib/storage';
 
-// ── localStorage helpers ──────────────────────────────────────────────────
+// ── localStorage helpers (user-scoped) ───────────────────────────────────
 function loadProgress(courseId) {
   if (typeof window === 'undefined') return {};
-  try { return JSON.parse(localStorage.getItem(`progress_${courseId}`) || '{}'); }
-  catch { return {}; }
+  return getLS(`progress_${courseId}`, {});
 }
 function saveProgress(courseId, data) {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(`progress_${courseId}`, JSON.stringify(data));
+  setLS(`progress_${courseId}`, data);
 }
 
 // ── Markdown-lite renderer ────────────────────────────────────────────────
@@ -129,7 +129,7 @@ export default function CoursePlayerPage({ params }) {
     setTimeLeft(QUIZ_SECONDS);
     clearInterval(timerRef.current);
     // load note
-    const savedNote = localStorage.getItem(`note_${id}_${activeId}`) || '';
+    const savedNote = getLS(`note_${id}_${activeId}`, '') || '';
     setNote(savedNote);
     setNoteSaved(false);
   }, [activeId]);
@@ -137,13 +137,13 @@ export default function CoursePlayerPage({ params }) {
   // Streak tracking
   useEffect(() => {
     const today = new Date().toDateString();
-    const last = localStorage.getItem('streak_last');
-    const count = parseInt(localStorage.getItem('streak_count') || '0');
+    const last = getLS('streak_last', null);
+    const count = parseInt(getLS('streak_count', 0) || 0);
     if (last === today) { setStreak(count); return; }
     const yesterday = new Date(Date.now() - 86400000).toDateString();
     const newCount = last === yesterday ? count + 1 : 1;
-    localStorage.setItem('streak_last', today);
-    localStorage.setItem('streak_count', String(newCount));
+    setLS('streak_last', today);
+    setLS('streak_count', newCount);
     setStreak(newCount);
   }, []);
 
@@ -232,7 +232,7 @@ export default function CoursePlayerPage({ params }) {
   }
 
   function saveNote() {
-    localStorage.setItem(`note_${id}_${activeId}`, note);
+    setLS(`note_${id}_${activeId}`, note);
     setNoteSaved(true);
     setTimeout(() => setNoteSaved(false), 2000);
   }

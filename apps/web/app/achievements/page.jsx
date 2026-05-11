@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Trophy, Flame, BookOpen, Star, Zap, Award, Lock, CheckCircle2, Target, Brain } from 'lucide-react';
 import { Shell } from '../../components/Shell';
 import { courses, getLessons } from '../../lib/data';
+import { getLS, setLS, uKey } from '../../lib/storage';
 
 const ALL_ACHIEVEMENTS = [
   { id: 'first_lesson', icon: BookOpen, color: 'from-blue-400 to-blue-600', title: 'Первый урок', desc: 'Пройдите первый урок любого курса', xp: 10 },
@@ -30,13 +31,13 @@ const ALL_ACHIEVEMENTS = [
 function computeAchievements() {
   if (typeof window === 'undefined') return { earned: [], streak: 0, totalXp: 0 };
 
-  const earned = new Set(JSON.parse(localStorage.getItem('achievements') || '[]'));
-  const streak = parseInt(localStorage.getItem('streak_count') || '0');
+  const earned = new Set(getLS('achievements', []));
+  const streak = parseInt(getLS('streak_count', 0) || 0);
 
-  // Auto-compute from localStorage data
+  // Auto-compute from user-scoped localStorage data
   // First lesson
   const anyProg = courses.some(c => {
-    const p = JSON.parse(localStorage.getItem(`progress_${c.id}`) || '{}');
+    const p = getLS(`progress_${c.id}`, {});
     return Object.values(p).some(v => v?.passed);
   });
   if (anyProg) earned.add('first_lesson');
@@ -48,40 +49,38 @@ function computeAchievements() {
 
   // First course completed
   const anyCompleted = courses.some(c => {
-    const p = JSON.parse(localStorage.getItem(`progress_${c.id}`) || '{}');
+    const p = getLS(`progress_${c.id}`, {});
     const lessons = getLessons(c.id);
     return lessons.every(l => p[l.id]?.passed);
   });
   if (anyCompleted) earned.add('first_course');
 
   // Per-course lessons completed
-  const dbProg = JSON.parse(localStorage.getItem('progress_database-systems') || '{}');
+  const dbProg = getLS('progress_database-systems', {});
   if (getLessons('database-systems').every(l => dbProg[l.id]?.passed)) earned.add('all_lessons_1');
 
   // All courses exams
   const allExamsPassed = courses.every(c => {
-    const r = JSON.parse(localStorage.getItem(`exam_${c.id}`) || 'null');
+    const r = getLS(`exam_${c.id}`, null);
     return r?.passed;
   });
   if (allExamsPassed) earned.add('all_courses');
 
   // Score 90+ on any exam
   const any90 = courses.some(c => {
-    const r = JSON.parse(localStorage.getItem(`exam_${c.id}`) || 'null');
+    const r = getLS(`exam_${c.id}`, null);
     return r?.passed && r?.pct >= 90;
   });
   if (any90) earned.add('score_90');
 
-  // Notes - check note count
-  let noteCount = 0;
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k?.startsWith('note_') && localStorage.getItem(k)?.trim()) noteCount++;
-  }
-  if (noteCount >= 5) earned.add('notes_taker');
+  // Per-exam achievements
+  courses.forEach(c => {
+    const r = getLS(`exam_${c.id}`, null);
+    if (r?.passed) earned.add(`exam_${c.id}`);
+  });
 
   const earnedArr = [...earned];
-  localStorage.setItem('achievements', JSON.stringify(earnedArr));
+  setLS('achievements', earnedArr);
 
   const totalXp = ALL_ACHIEVEMENTS
     .filter(a => earnedArr.includes(a.id))

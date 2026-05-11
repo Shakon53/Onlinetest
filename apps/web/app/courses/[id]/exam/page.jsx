@@ -7,6 +7,7 @@ import { ChevronLeft, Timer, Trophy, XCircle, RotateCcw, GraduationCap, CheckCir
 import { Shell } from '../../../../components/Shell';
 import { useI18n } from '../../../../components/I18nProvider';
 import { courses, getLessons } from '../../../../lib/data';
+import { getLS, setLS } from '../../../../lib/storage';
 
 const EXAM_SECONDS = 60 * 60; // 60 minutes
 const EXAM_PASS = 0.70; // 70%
@@ -61,12 +62,12 @@ export default function ExamPage({ params }) {
   // Check if all lessons passed
   const [allPassed, setAllPassed] = useState(false);
   useEffect(() => {
-    const prog = JSON.parse(localStorage.getItem(`progress_${id}`) || '{}');
+    const prog = getLS(`progress_${id}`, {});
     const passed = lessons.every(l => prog[l.id]?.passed);
     setAllPassed(passed);
 
     // Check existing exam result
-    const examResult = JSON.parse(localStorage.getItem(`exam_${id}`) || 'null');
+    const examResult = getLS(`exam_${id}`, null);
     if (examResult) { setScore(examResult); setSubmitted(true); }
   }, [id]);
 
@@ -119,14 +120,14 @@ export default function ExamPage({ params }) {
     const result = { correct, total: questions.length, pct, passed, date: Date.now() };
     setScore(result);
     setSubmitted(true);
-    localStorage.setItem(`exam_${id}`, JSON.stringify(result));
+    setLS(`exam_${id}`, result);
 
     // Mark exam passed in achievements
     if (passed) {
-      const achievements = JSON.parse(localStorage.getItem('achievements') || '[]');
+      const achievements = getLS('achievements', []);
       if (!achievements.includes(`exam_${id}`)) {
         achievements.push(`exam_${id}`);
-        localStorage.setItem('achievements', JSON.stringify(achievements));
+        setLS('achievements', achievements);
       }
     }
   }

@@ -13,6 +13,7 @@ import { Shell } from '../../components/Shell';
 import { useI18n } from '../../components/I18nProvider';
 import { getSession } from '../../lib/api';
 import { courses, getLessons } from '../../lib/data';
+import { getLS } from '../../lib/storage';
 
 // ── ADMIN DASHBOARD ───────────────────────────────────────────────────────────
 function AdminDashboard({ user }) {
@@ -193,13 +194,13 @@ function StudentDashboard({ user, lang, t }) {
   useEffect(() => {
     const prog = {};
     courses.forEach(c => {
-      const p = JSON.parse(localStorage.getItem(`progress_${c.id}`) || '{}');
+      const p = getLS(`progress_${c.id}`, {});
       const lessons = getLessons(c.id);
       const passed = lessons.filter(l => p[l.id]?.passed).length;
       prog[c.id] = { passed, total: lessons.length, pct: lessons.length ? Math.round((passed / lessons.length) * 100) : 0 };
     });
     setCourseProgress(prog);
-    setStreak(parseInt(localStorage.getItem('streak_count') || '0'));
+    setStreak(parseInt(getLS('streak_count', 0) || 0));
   }, []);
 
   const totalPassed = Object.values(courseProgress).reduce((s, p) => s + p.passed, 0);
@@ -245,7 +246,7 @@ function StudentDashboard({ user, lang, t }) {
           const content = c.translations[lang] || c.translations.ru;
           const p = courseProgress[c.id] || { pct: 0, passed: 0, total: 0 };
           const examResult = typeof window !== 'undefined'
-            ? JSON.parse(localStorage.getItem(`exam_${c.id}`) || 'null') : null;
+            ? getLS(`exam_${c.id}`, null) : null;
           return (
             <Link key={c.id} href={`/courses/${c.id}`} className="glass card-hover rounded-3xl p-5 block">
               <div className="mb-3 flex items-start justify-between gap-2">

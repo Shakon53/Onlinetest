@@ -6,6 +6,7 @@ import { CheckCircle2, Lock, BookOpen, Zap, Target, ChevronLeft, GraduationCap, 
 import { Shell } from '../../../components/Shell';
 import { useI18n } from '../../../components/I18nProvider';
 import { courses, getLessons } from '../../../lib/data';
+import { getLS } from '../../../lib/storage';
 
 export default function RoadmapPage({ params }) {
   const { courseId } = use(params);
@@ -16,7 +17,7 @@ export default function RoadmapPage({ params }) {
   const [progress, setProgress] = useState({});
 
   useEffect(() => {
-    const p = JSON.parse(localStorage.getItem(`progress_${courseId}`) || '{}');
+    const p = getLS(`progress_${courseId}`, {});
     setProgress(p);
   }, [courseId]);
 
@@ -29,7 +30,7 @@ export default function RoadmapPage({ params }) {
   const completedCount = Object.values(progress).filter(p => p?.passed).length;
   const totalPct = lessons.length ? Math.round((completedCount / lessons.length) * 100) : 0;
   const examResult = typeof window !== 'undefined'
-    ? JSON.parse(localStorage.getItem(`exam_${courseId}`) || 'null') : null;
+    ? getLS(`exam_${courseId}`, null) : null;
 
   if (!course) return <Shell><div className="p-10 text-center text-slate-400">Курс не найден</div></Shell>;
 
