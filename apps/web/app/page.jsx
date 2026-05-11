@@ -6,20 +6,10 @@ import { ArrowRight, Award, BookOpen, CheckCircle2, GraduationCap, LayoutDashboa
 import { Shell } from '../components/Shell';
 import { CourseCard } from '../components/CourseCard';
 import { useI18n } from '../components/I18nProvider';
-import { courses } from '../lib/data';
+import { courses, getLessons } from '../lib/data';
 
-const PLATFORM_STATS = [
-  { value: '12.8K', label: null, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/40' },
-  { value: '96', label: null, icon: BookOpen, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/40' },
-  { value: '4.2K', label: null, icon: Award, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/40' },
-  { value: '87%', label: null, icon: Trophy, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/40' }
-];
-
-const TESTIMONIALS = [
-  { name: 'Aruzhan Seitkali', role: 'Student, 3rd year', avatar: 'A', text: 'The platform helped me track my progress in every subject. The locked lesson system keeps me on track without skipping ahead.', rating: 5 },
-  { name: 'Mikhail Ivanov', role: 'Student, 4th year', avatar: 'M', text: 'I love the clean interface and the real-time leaderboard. Competing with classmates keeps me motivated to study every day.', rating: 5 },
-  { name: 'Dana Bekova', role: 'Student, 2nd year', avatar: 'D', text: 'Getting a verifiable certificate with a QR code after finishing a course feels like a real achievement. Highly recommended!', rating: 5 }
-];
+// Real platform stats — computed from actual data
+const TOTAL_LESSONS = courses.reduce((s, c) => s + getLessons(c.id).length, 0);
 
 const FEATURES = [
   { icon: CheckCircle2, label: { ru: 'Строгая последовательность уроков', en: 'Strict lesson sequencing', kk: 'Сабақтардың қатаң реті' }, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/30' },
@@ -30,27 +20,33 @@ const FEATURES = [
   { icon: Users, label: { ru: 'Чат с преподавателем', en: 'Chat with teacher', kk: 'Оқытушымен чат' }, color: 'text-teal-600', bg: 'bg-teal-50 dark:bg-teal-950/30' }
 ];
 
-const CATEGORIES = [
-  { name: 'Programming', emoji: '💻', count: 12 },
-  { name: 'Data', emoji: '📊', count: 8 },
-  { name: 'Network', emoji: '🌐', count: 6 },
-  { name: 'AI', emoji: '🤖', count: 9 },
-  { name: 'Practice', emoji: '🏭', count: 4 },
-  { name: 'IT', emoji: '🔧', count: 7 }
-];
+// Real category counts from actual course data
+const CATEGORIES = ['IT', 'Programming', 'Data', 'Network', 'AI', 'Practice'].map(cat => {
+  const catEmoji = { IT: '�', Programming: '💻', Data: '📊', Network: '🌐', AI: '🤖', Practice: '🏭' };
+  return { name: cat, emoji: catEmoji[cat], count: courses.filter(c => c.category === cat).length };
+});
 
 export default function HomePage() {
   const { t, lang } = useI18n();
   const [user, setUser] = useState(null);
+  const [registeredCount, setRegisteredCount] = useState(0);
 
   useEffect(() => {
     try {
       const session = JSON.parse(localStorage.getItem('lms_user') || 'null');
       setUser(session);
+      // Real user count: 4 demo accounts + registered students
+      const registered = JSON.parse(localStorage.getItem('lms_registered_users') || '[]');
+      setRegisteredCount(4 + registered.length);
     } catch {}
   }, []);
 
-  const statLabels = [t.students, t.courses, t.certificates, t.completion];
+  const realStats = [
+    { value: registeredCount > 0 ? `${registeredCount}` : '—', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/40', label: t.students },
+    { value: String(courses.length), icon: BookOpen, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/40', label: t.courses },
+    { value: String(TOTAL_LESSONS), icon: Award, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/40', label: lang === 'ru' ? 'Уроков' : 'Lessons' },
+    { value: courses.length + ' / ' + TOTAL_LESSONS, icon: Trophy, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/40', label: lang === 'ru' ? 'Курс / Уроков' : 'Courses/Lessons' },
+  ];
 
   return (
     <Shell>
@@ -95,32 +91,27 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Social proof */}
-          <div className="mt-8 flex items-center gap-4">
-            <div className="flex -space-x-2">
-              {['A', 'D', 'Z', 'M', 'N'].map((ch) => (
-                <div key={ch} className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-brand-500 to-purple-600 text-xs font-bold text-white dark:border-slate-950">
-                  {ch}
-                </div>
-              ))}
-            </div>
-            <div>
-              <div className="flex items-center gap-0.5">
-                {[1,2,3,4,5].map((i) => <Star key={i} size={14} className="fill-amber-400 text-amber-400" />)}
+          {/* Real user count badge */}
+          {registeredCount > 0 && (
+            <div className="mt-8 flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-xs font-bold text-white">
+                <Users size={14} />
               </div>
-              <p className="text-xs text-slate-500">Trusted by 12,800+ students</p>
+              <p className="text-sm text-slate-500">
+                {lang === 'ru' ? `${registeredCount} пользователей зарегистрировано` : `${registeredCount} users registered`}
+              </p>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Hero card */}
         <div className="glass rounded-[2rem] p-6">
           <div className="grid gap-4 sm:grid-cols-2">
-            {PLATFORM_STATS.map((stat, i) => (
+            {realStats.map((stat, i) => (
               <div key={i} className={`rounded-3xl p-5 ${stat.bg}`}>
                 <stat.icon size={22} className={`mb-3 ${stat.color}`} />
                 <p className="text-3xl font-black">{stat.value}</p>
-                <p className="text-sm text-slate-500">{statLabels[i]}</p>
+                <p className="text-sm text-slate-500">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -218,29 +209,16 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ─────────────────────────────────────── */}
+      {/* ── COURSES PREVIEW ───────────────────────────────────── */}
       <section className="mx-auto max-w-7xl px-4 py-10">
-        <h2 className="mb-6 text-2xl font-black">{t.testimonials}</h2>
-        <div className="grid gap-5 md:grid-cols-3">
-          {TESTIMONIALS.map((review) => (
-            <div key={review.name} className="glass card-hover rounded-3xl p-6">
-              <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-purple-600 text-lg font-black text-white">
-                  {review.avatar}
-                </div>
-                <div>
-                  <p className="font-bold">{review.name}</p>
-                  <p className="text-xs text-slate-500">{review.role}</p>
-                </div>
-              </div>
-              <div className="mb-3 flex gap-0.5">
-                {Array.from({ length: review.rating }).map((_, i) => (
-                  <Star key={i} size={14} className="fill-amber-400 text-amber-400" />
-                ))}
-              </div>
-              <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">"{review.text}"</p>
-            </div>
-          ))}
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-2xl font-black">{lang === 'ru' ? 'Доступные курсы' : lang === 'kk' ? 'Қол жетімді курстар' : 'Available Courses'}</h2>
+          <Link href="/courses" className="text-sm font-semibold text-brand-600 hover:underline">
+            {lang === 'ru' ? 'Все курсы' : 'All courses'} →
+          </Link>
+        </div>
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {courses.slice(0, 3).map(c => <CourseCard key={c.id} course={c} />)}
         </div>
       </section>
 
@@ -252,7 +230,12 @@ export default function HomePage() {
             {lang === 'ru' ? 'Начни учиться сегодня' : lang === 'kk' ? 'Бүгін оқуды бастаңыз' : 'Start learning today'}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-white/80">
-            {lang === 'ru' ? 'Присоединяйтесь к 12 800 студентам которые уже учатся на нашей платформе.' : lang === 'kk' ? '12 800 студентке қосылыңыз, олар платформамызда оқып жатыр.' : 'Join 12,800 students already learning on our platform.'}
+            {lang === 'ru'
+              ? `Платформа с ${courses.length} курсами и ${TOTAL_LESSONS} уроками. Начни прямо сейчас.`
+              : lang === 'kk'
+              ? `${courses.length} курс және ${TOTAL_LESSONS} сабақ бар платформа. Қазір бастаңыз.`
+              : `Platform with ${courses.length} courses and ${TOTAL_LESSONS} lessons. Start right now.`
+            }
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             {user ? (
