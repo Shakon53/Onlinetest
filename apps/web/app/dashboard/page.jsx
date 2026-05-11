@@ -18,12 +18,6 @@ const CHART_DATA = [
   { week: 'W5', score: 88 }
 ];
 
-const LEADERBOARD_STATIC = [
-  { name: 'Aruzhan S.', score: 98 },
-  { name: 'Dias K.', score: 95 },
-  { name: 'You', score: 88, isYou: true },
-  { name: 'Mira T.', score: 84 }
-];
 
 export default function DashboardPage() {
   const { lang, t } = useI18n();
@@ -109,7 +103,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Mini leaderboard */}
+          {/* My progress card */}
           <div className="glass rounded-3xl p-6">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-xl font-bold">{t.leaderboard}</h2>
@@ -117,20 +111,34 @@ export default function DashboardPage() {
                 View all <ChevronRight size={14} />
               </Link>
             </div>
-            <div className="space-y-3">
-              {LEADERBOARD_STATIC.map((entry, i) => (
-                <div
-                  key={entry.name}
-                  className={`flex items-center gap-3 rounded-2xl px-4 py-3 ${entry.isYou ? 'bg-brand-50 ring-2 ring-brand-200 dark:bg-brand-950/30 dark:ring-brand-800' : 'bg-white dark:bg-slate-900'}`}
-                >
-                  <span className={`text-sm font-black ${i === 0 ? 'text-amber-500' : 'text-slate-400'}`}>#{i + 1}</span>
-                  <span className={`flex-1 text-sm font-semibold ${entry.isYou ? 'text-brand-600' : ''}`}>{entry.name}</span>
-                  <span className="flex items-center gap-1 text-sm font-bold text-amber-500">
-                    <Star size={12} fill="currentColor" />{entry.score}
-                  </span>
+            <div className="flex items-center gap-4 rounded-2xl bg-brand-50 dark:bg-brand-950/30 ring-2 ring-brand-200 dark:ring-brand-800 px-4 py-4">
+              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-violet-600 text-xl font-black text-white">
+                {user.name?.[0]?.toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-brand-600 truncate">{user.name}</p>
+                <p className="text-xs text-slate-500">{user.role}</p>
+              </div>
+              <div className="flex items-center gap-1 text-amber-500">
+                <Star size={14} fill="currentColor" />
+                <span className="text-sm font-bold">{currentScore}</span>
+              </div>
+            </div>
+            <div className="mt-4 space-y-3">
+              {[{label: 'Текущий балл', val: currentScore, max: 100, color: 'bg-brand-500'}, {label: 'GPA', val: Math.round(gpa * 25), max: 100, color: 'bg-violet-500'}].map(item => (
+                <div key={item.label}>
+                  <div className="mb-1 flex justify-between text-xs text-slate-500">
+                    <span>{item.label}</span><span className="font-bold text-slate-700 dark:text-slate-300">{item.label === 'GPA' ? gpa.toFixed(2) : item.val}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-200 dark:bg-slate-700">
+                    <div className={`h-2 rounded-full transition-all ${item.color}`} style={{ width: `${item.val}%` }} />
+                  </div>
                 </div>
               ))}
             </div>
+            <Link href="/leaderboard" className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl bg-white dark:bg-slate-900 py-2 text-sm font-semibold text-brand-600 hover:bg-slate-50 dark:hover:bg-slate-800">
+              Посмотреть рейтинг <ChevronRight size={14} />
+            </Link>
           </div>
         </div>
 
