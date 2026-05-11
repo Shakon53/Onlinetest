@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   BookOpen, CheckCircle2, ChevronLeft, ChevronRight, Clock,
   Lock, Trophy, XCircle, AlertCircle, RotateCcw,
@@ -67,10 +68,22 @@ const QUIZ_SECONDS = 15 * 60; // 15 minutes per quiz
 export default function CoursePlayerPage({ params }) {
   const { id } = use(params);
   const { lang, t } = useI18n();
+  const router = useRouter();
 
   const course = courses.find(c => c.id === id);
   const lessons = getLessons(id);
   const content = course?.translations?.[lang] || course?.translations?.ru;
+
+  // Auth guard
+  const [authReady, setAuthReady] = useState(false);
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('lms_user') || 'null');
+    if (!user) {
+      router.replace(`/auth/login?redirect=/courses/${id}`);
+    } else {
+      setAuthReady(true);
+    }
+  }, [id]);
 
   // progress stored in localStorage
   const [progress, setProgress] = useState({});
@@ -162,6 +175,10 @@ export default function CoursePlayerPage({ params }) {
     if (el.scrollHeight <= el.clientHeight + 10) setTheoryRead(true);
     return () => el.removeEventListener('scroll', check);
   }, [phase, activeId]);
+
+  if (!authReady) return (
+    <Shell><div className="flex min-h-[50vh] items-center justify-center"><div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" /></div></Shell>
+  );
 
   if (!course) return (
     <Shell><div className="p-10 text-center text-slate-400">Курс не найден</div></Shell>

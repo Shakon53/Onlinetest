@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useState } from 'react';
 import { Eye, EyeOff, GraduationCap, Lock, Mail } from 'lucide-react';
 import { Shell } from '../../../components/Shell';
 import { useI18n } from '../../../components/I18nProvider';
@@ -16,13 +16,22 @@ const LOCAL_ACCOUNTS = [
   { email: 'teacher2@lms.kz', password: 'Teacher@5678', role: 'teacher', name: 'Преподаватель 2' },
 ];
 
-export default function LoginPage() {
+function LoginForm() {
   const { t } = useI18n();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirect') || null;
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPass, setShowPass] = useState(false);
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
+
+  function goAfterLogin(role) {
+    if (redirectTo) { router.push(redirectTo); return; }
+    if (role === 'admin') router.push('/admin');
+    else if (role === 'teacher') router.push('/teacher');
+    else router.push('/dashboard');
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -36,18 +45,14 @@ export default function LoginPage() {
     if (localMatch) {
       saveSession({ user: { name: localMatch.name, email: localMatch.email, role: localMatch.role } });
       setLoading(false);
-      if (localMatch.role === 'admin') router.push('/admin');
-      else router.push('/teacher');
+      goAfterLogin(localMatch.role);
       return;
     }
 
     try {
       const data = await apiRequest('/auth/login', { method: 'POST', body: JSON.stringify(form) });
       saveSession(data);
-      const role = data.user?.role;
-      if (role === 'admin') router.push('/admin');
-      else if (role === 'teacher') router.push('/teacher');
-      else router.push('/dashboard');
+      goAfterLogin(data.user?.role);
     } catch (error) {
       setStatus(error.message || 'Неверный email или пароль');
     } finally {
@@ -153,5 +158,13 @@ export default function LoginPage() {
         </div>
       </section>
     </Shell>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<Shell><div className="flex min-h-[50vh] items-center justify-center"><div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-600 border-t-transparent" /></div></Shell>}>
+      <LoginForm />
+    </Suspense>
   );
 }
