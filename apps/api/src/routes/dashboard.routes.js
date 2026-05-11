@@ -23,13 +23,14 @@ router.get('/leaderboard', asyncHandler(async (req, res) => {
     if (!p.student || p.student.role !== 'student') continue;
     const id = p.student._id.toString();
     if (!scoreMap[id]) scoreMap[id] = { name: p.student.name, email: p.student.email, totalScore: 0, count: 0, lessons: 0 };
-    scoreMap[id].totalScore += p.score || 0;
+    scoreMap[id].totalScore += p.percent || p.score || 0;
     scoreMap[id].count += 1;
     scoreMap[id].lessons += p.completedLessons?.length || 0;
   }
   const leaderboard = Object.values(scoreMap)
+    .filter(s => s.lessons > 0)
     .map(s => ({ name: s.name, email: s.email, score: s.count > 0 ? Math.round(s.totalScore / s.count) : 0, lessons: s.lessons }))
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => b.lessons - a.lessons || b.score - a.score)
     .slice(0, 10);
   res.json({ leaderboard });
 }));
