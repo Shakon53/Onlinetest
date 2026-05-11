@@ -1,3 +1,9 @@
+import { courseLessonsMap } from './courseData.js';
+
+export function getLessons(courseId) {
+  return courseLessonsMap[courseId] || [];
+}
+
 export const courses = [
   {
     id: 'database-systems',
