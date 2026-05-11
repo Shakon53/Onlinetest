@@ -8,14 +8,6 @@ import { Shell } from '../../../components/Shell';
 import { useI18n } from '../../../components/I18nProvider';
 import { apiRequest, getSession } from '../../../lib/api';
 
-// Local demo accounts (always present)
-const LOCAL_DEMO_ACCOUNTS = [
-  { _id: 'local_admin1', name: 'Администратор 1', email: 'admin1@lms.kz', role: 'admin',   status: 'active', createdAt: '2025-01-01' },
-  { _id: 'local_admin2', name: 'Администратор 2', email: 'admin2@lms.kz', role: 'admin',   status: 'active', createdAt: '2025-01-01' },
-  { _id: 'local_t1',     name: 'Преподаватель 1', email: 'teacher1@lms.kz', role: 'teacher', status: 'active', createdAt: '2025-01-01' },
-  { _id: 'local_t2',     name: 'Преподаватель 2', email: 'teacher2@lms.kz', role: 'teacher', status: 'active', createdAt: '2025-01-01' },
-];
-
 const ROLE_COLORS = {
   admin: 'bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300',
   teacher: 'bg-violet-100 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300',
@@ -35,30 +27,12 @@ export default function AdminUsersPage() {
     const session = getSession();
     if (!session || session.role !== 'admin') { router.replace('/auth/login'); return; }
 
-    // Build user list: local demo accounts + localStorage registered students
-    const registered = JSON.parse(localStorage.getItem('lms_registered_users') || '[]');
-    const registeredUsers = registered.map((u, i) => ({
-      _id: `reg_${i}`,
-      name: u.name || u.email.split('@')[0],
-      email: u.email,
-      role: u.role || 'student',
-      status: u.blocked ? 'blocked' : 'active',
-      createdAt: u.createdAt || new Date().toISOString().split('T')[0]
-    }));
-
-    const allUsers = [...LOCAL_DEMO_ACCOUNTS, ...registeredUsers];
-    setUsers(allUsers);
     setReady(true);
-
-    // Also try to fetch from backend if available
+    // Fetch all users from backend
     apiRequest('/admin/users')
       .then((data) => {
         if (data.users?.length) {
-          const backendUsers = data.users.map(u => ({
-            ...u,
-            status: u.isBlocked ? 'blocked' : 'active'
-          }));
-          setUsers([...LOCAL_DEMO_ACCOUNTS, ...backendUsers]);
+          setUsers(data.users.map(u => ({ ...u, status: u.isBlocked ? 'blocked' : 'active' })));
         }
       })
       .catch(() => {});

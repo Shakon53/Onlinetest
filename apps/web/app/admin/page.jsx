@@ -8,7 +8,7 @@ import {
   GraduationCap, Shield, TrendingUp, UserCheck, Users
 } from 'lucide-react';
 import { Shell } from '../../components/Shell';
-import { getSession } from '../../lib/api';
+import { getSession, apiRequest } from '../../lib/api';
 import { courses, getLessons } from '../../lib/data';
 
 export default function AdminPage() {
@@ -21,32 +21,19 @@ export default function AdminPage() {
     if (!user) { router.replace('/auth/login'); return; }
     if (user.role !== 'admin') { router.replace('/dashboard'); return; }
     setReady(true);
-
-    const registered = JSON.parse(localStorage.getItem('lms_registered_users') || '[]');
-    const allUsers = [
-      { role: 'admin' }, { role: 'admin' }, { role: 'teacher' }, { role: 'teacher' },
-      ...registered
-    ];
-    const students = allUsers.filter(u => u.role === 'student').length;
-    const teachers = allUsers.filter(u => u.role === 'teacher').length;
-    const admins = allUsers.filter(u => u.role === 'admin').length;
     const totalLessons = courses.reduce((s, c) => s + getLessons(c.id).length, 0);
-
-    let certs = 0, lessonsPassed = 0;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key) continue;
-      if (key.includes('::exam_')) {
-        try { const v = JSON.parse(localStorage.getItem(key)); if (v?.passed) certs++; } catch {}
-      }
-      if (key.includes('::progress_')) {
-        try {
-          const prog = JSON.parse(localStorage.getItem(key));
-          lessonsPassed += Object.values(prog).filter(p => p?.passed).length;
-        } catch {}
-      }
-    }
-    setStats({ users: allUsers.length, courses: courses.length, lessons: totalLessons, certs, lessonsPassed, students, teachers, admins });
+    // Fetch real user stats from backend
+    apiRequest('/admin/users')
+      .then((data) => {
+        const allUsers = data.users || [];
+        const students = allUsers.filter(u => u.role === 'student').length;
+        const teachers = allUsers.filter(u => u.role === 'teacher').length;
+        const admins   = allUsers.filter(u => u.role === 'admin').length;
+        setStats(prev => ({ ...prev, users: allUsers.length, students, teachers, admins, courses: courses.length, lessons: totalLessons }));
+      })
+      .catch(() => {
+        setStats(prev => ({ ...prev, courses: courses.length, lessons: totalLessons }));
+      });
   }, [router]);
 
   if (!ready) return null;

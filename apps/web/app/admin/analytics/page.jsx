@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { ArrowLeft, Award, BookOpen, GraduationCap, Shield, TrendingUp, UserCheck, Users } from 'lucide-react';
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Shell } from '../../../components/Shell';
-import { getSession } from '../../../lib/api';
+import { getSession, apiRequest } from '../../../lib/api';
 import { courses, getLessons } from '../../../lib/data';
 
 function buildRealData() {
@@ -97,7 +97,27 @@ export default function AdminAnalyticsPage() {
     const user = getSession();
     if (!user || user.role !== 'admin') { router.replace('/auth/login'); return; }
     setReady(true);
-    setData(buildRealData());
+    // Try backend first, fall back to localStorage
+    apiRequest('/admin/users')
+      .then((res) => {
+        if (res.users?.length) {
+          const base = buildRealData() || {};
+          const students = res.users.filter(u => u.role === 'student').length;
+          const teachers = res.users.filter(u => u.role === 'teacher').length;
+          const admins   = res.users.filter(u => u.role === 'admin').length;
+          const totalLessons = courses.reduce((s, c) => s + getLessons(c.id).length, 0);
+          const recentUsers = [...res.users].sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||'')).slice(0,6);
+          const rolePie = [
+            { name: 'Студенты', value: students, color: '#2f7df6' },
+            { name: 'Преподаватели', value: teachers, color: '#7c3aed' },
+            { name: 'Администраторы', value: admins, color: '#e11d48' },
+          ].filter(r => r.value > 0);
+          setData({ ...base, totalUsers: res.users.length, students, teachers, admins, totalLessons, rolePie, recentUsers });
+        } else {
+          setData(buildRealData());
+        }
+      })
+      .catch(() => setData(buildRealData()));
   }, [router]);
 
   if (!ready || !data) return null;
@@ -123,7 +143,7 @@ export default function AdminAnalyticsPage() {
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-3xl font-black">{t.platformAnalytics}</h1>
+            <h1 className="text-3xl font-black">Аналитика платформы</h1>
             <p className="text-slate-500">Live platform statistics</p>
           </div>
         </div>
