@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Award, BookOpen, CheckCircle2, GraduationCap, Play, Sparkles, Star, Trophy, Users, Zap } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowRight, Award, BookOpen, CheckCircle2, GraduationCap, LayoutDashboard, Play, Sparkles, Star, Trophy, Users, Zap } from 'lucide-react';
 import { Shell } from '../components/Shell';
 import { CourseCard } from '../components/CourseCard';
 import { useI18n } from '../components/I18nProvider';
@@ -40,6 +41,14 @@ const CATEGORIES = [
 
 export default function HomePage() {
   const { t, lang } = useI18n();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    try {
+      const session = JSON.parse(localStorage.getItem('lms_user') || 'null');
+      setUser(session);
+    } catch {}
+  }, []);
 
   const statLabels = [t.students, t.courses, t.certificates, t.completion];
 
@@ -62,15 +71,28 @@ export default function HomePage() {
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/auth/register" className="flex items-center gap-2 rounded-full bg-brand-600 px-6 py-3 font-semibold text-white shadow-soft transition hover:bg-brand-500">
-              <GraduationCap size={18} />{t.startLearning}
-            </Link>
-            <Link href="/courses" className="flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold shadow-sm dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800">
-              <BookOpen size={18} />{t.navCourses}
-            </Link>
-            <Link href="/auth/login" className="rounded-full border border-slate-200 px-6 py-3 font-semibold dark:border-slate-700 hover:bg-white dark:hover:bg-slate-900">
-              {t.login}
-            </Link>
+            {user ? (
+              <>
+                <Link href="/dashboard" className="flex items-center gap-2 rounded-full bg-brand-600 px-6 py-3 font-semibold text-white shadow-soft transition hover:bg-brand-500">
+                  <LayoutDashboard size={18} />{t.navDashboard}
+                </Link>
+                <Link href="/courses" className="flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold shadow-sm dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800">
+                  <BookOpen size={18} />{t.navCourses}
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/register" className="flex items-center gap-2 rounded-full bg-brand-600 px-6 py-3 font-semibold text-white shadow-soft transition hover:bg-brand-500">
+                  <GraduationCap size={18} />{t.startLearning}
+                </Link>
+                <Link href="/courses" className="flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold shadow-sm dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800">
+                  <BookOpen size={18} />{t.navCourses}
+                </Link>
+                <Link href="/auth/login" className="rounded-full border border-slate-200 px-6 py-3 font-semibold dark:border-slate-700 hover:bg-white dark:hover:bg-slate-900">
+                  {t.login}
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Social proof */}
@@ -233,9 +255,15 @@ export default function HomePage() {
             {lang === 'ru' ? 'Присоединяйтесь к 12 800 студентам которые уже учатся на нашей платформе.' : lang === 'kk' ? '12 800 студентке қосылыңыз, олар платформамызда оқып жатыр.' : 'Join 12,800 students already learning on our platform.'}
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Link href="/auth/register" className="rounded-full bg-white px-8 py-3 font-bold text-brand-700 shadow-lg hover:bg-slate-50">
-              {t.register} — {lang === 'ru' ? 'бесплатно' : lang === 'kk' ? 'тегін' : 'it\'s free'}
-            </Link>
+            {user ? (
+              <Link href="/dashboard" className="rounded-full bg-white px-8 py-3 font-bold text-brand-700 shadow-lg hover:bg-slate-50">
+                {t.navDashboard}
+              </Link>
+            ) : (
+              <Link href="/auth/register" className="rounded-full bg-white px-8 py-3 font-bold text-brand-700 shadow-lg hover:bg-slate-50">
+                {t.register} — {lang === 'ru' ? 'бесплатно' : lang === 'kk' ? 'тегін' : 'it\'s free'}
+              </Link>
+            )}
             <Link href="/courses" className="rounded-full border-2 border-white/40 px-8 py-3 font-bold text-white hover:border-white">
               {t.navCourses}
             </Link>
