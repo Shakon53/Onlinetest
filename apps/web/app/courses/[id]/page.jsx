@@ -562,10 +562,17 @@ export default function CoursePlayerPage({ params }) {
               </button>
             )}
             {quizScore.pct >= 60 && (
-              <button onClick={goToNextLesson} disabled={!lessons.find(l => l.id === activeId + 1)}
-                className="flex items-center gap-2 rounded-2xl px-6 py-3 bg-brand-600 text-white font-bold hover:bg-brand-500 disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-brand-600/30">
-                Следующий урок <ChevronRight size={16} />
-              </button>
+              lessons.find(l => l.id === activeId + 1) ? (
+                <button onClick={goToNextLesson}
+                  className="flex items-center gap-2 rounded-2xl px-6 py-3 bg-brand-600 text-white font-bold hover:bg-brand-500 shadow-lg shadow-brand-600/30">
+                  Следующий урок <ChevronRight size={16} />
+                </button>
+              ) : (
+                <Link href={`/courses/${id}/exam`}
+                  className="flex items-center gap-2 rounded-2xl px-6 py-3 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold hover:opacity-90 shadow-lg shadow-amber-500/30">
+                  <GraduationCap size={18} /> Перейти к экзамену
+                </Link>
+              )
             )}
           </div>
         </div>
